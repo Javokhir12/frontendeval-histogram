@@ -1,23 +1,51 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from "react";
+import "./App.css";
+import Plot from "./components/Plot";
 
 function App() {
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          "https://www.random.org/integers/?num=200&min=1&max=10&col=1&base=10&format=plain&rnd=new"
+        );
+        const textData = await response.text();
+        const numsHash = textData.split("").reduce((acc, curr) => {
+          if (curr === "\n") return acc;
+          acc[curr] = acc[curr] || 0;
+          acc[curr]++;
+          return acc;
+        }, {});
+        setData(numsHash);
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const plotData = {
+    labels: Object.keys(data),
+    datasets: [
+      {
+        label: "Number frequency",
+        data: Object.values(data),
+        backgroundColor: "rgba(0, 0, 0, .5)",
+      },
+    ],
+  };
+
+  if (loading) return <h2 className="loading">Loading...</h2>;
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Plot data={plotData} />
     </div>
   );
 }
